@@ -6,7 +6,7 @@ from .CObj import CObj
 from .CFunc import CFunc
 
 class Parser:
-    def __init__(self, logger : str = None) -> None:
+    def __init__(self, logger : str = "") -> None:
         """
         # Description:
             Constructor of Parser.
@@ -16,7 +16,7 @@ class Parser:
                 The name of the logger.
                 The logger uses logging in the python standard.
         """
-        if(logger is not None):
+        if(logger):
             self.logger = logging.getLogger(logger)
         else:
             self.logger = None
@@ -75,7 +75,7 @@ class Parser:
             A list of CObj.
         """
         return self._parse_ast(
-            pyc.c_parser.CParser().parse_file(path, use_cpp, cpp_path, 
+            pyc.parse_file(path, use_cpp, cpp_path, 
                 cpp_args, parser
             )
         )
@@ -182,7 +182,7 @@ class Parser:
             # Check type.
             if(isinstance(node.type, pyc.c_ast.ArrayDecl)):
                 c_obj_type, c_obj_array_layers, c_obj_pointer_layers = \
-                    self.target_list_get_nesting_type(node.type)
+                    self._get_nesting_type(node.type)
 
             elif(isinstance(node.type, pyc.c_ast.Decl)):
                 # I don't think Decl should appear, but it needs to be verified.
@@ -202,29 +202,29 @@ class Parser:
                 is_function = True
                 # Get params.
                 for param in node.type.args:
-                    c_obj_params.append(self.c_decl_to_c_obj(param))
+                    c_obj_params.append(self._ast_to_c_obj(param))
                 # Get type.
                 c_obj_type, c_obj_array_layers, c_obj_pointer_layers = \
-                    self.target_list_get_nesting_type(node.type.type)
+                    self._get_nesting_type(node.type.type)
 
             elif(isinstance(node.type, pyc.c_ast.PtrDecl)):
                 # Pointer declaration, such as:
                 #   int *a;
                 c_obj_type, c_obj_array_layers, c_obj_pointer_layers = \
-                    self.target_list_get_nesting_type(node.type)
+                    self._get_nesting_type(node.type)
 
             elif(isinstance(node.type, pyc.c_ast.TypeDecl)):
                 # TypeDecl, such as:
                 #   int a;
                 c_obj_type, c_obj_array_layers, c_obj_pointer_layers = \
-                    self.target_list_get_nesting_type(node.type)
+                    self._get_nesting_type(node.type)
 
             elif(isinstance(node.type, pyc.c_ast.Typename)):
                 # Typename, such as:
                 #   void func(int);
                 # Then `int`` in the params is Typename.
                 c_obj_type, c_obj_array_layers, c_obj_pointer_layers = \
-                    self.target_list_get_nesting_type(node.type.type)
+                    self._get_nesting_type(node.type.type)
                 
                 raise Exception("TODO.")
 
@@ -247,7 +247,7 @@ class Parser:
             # TODO: align
             if(isinstance(node.type, pyc.c_ast.TypeDecl)):
                 c_obj_type, c_obj_array_layers, c_obj_pointer_layers = \
-                    self.target_list_get_nesting_type(node)
+                    self._get_nesting_type(node)
             else:
                 raise Exception("TODO, node: " + str(node))
 
